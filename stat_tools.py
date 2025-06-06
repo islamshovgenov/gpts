@@ -317,7 +317,7 @@ def compute_group_iqr(
     stage_col: str   = "Этап регистрации",
     group_col: str   = "После приема"
 ) -> pd.DataFrame:
-    """f
+    """
     Считает для каждой из групп T/R и для двух этапов (baseline = Скрининг, followup = Период 2)
     квартили Q1, медиану и Q3 по параметру param_col и возвращает DataFrame
     с колонками [group_col, stage, q1, median, q3].
