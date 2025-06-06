@@ -22,10 +22,15 @@ def make_simple_df():
 
 
 
+
 def test_calc_auc_simple():
     auc = calc_auc([0, 1, 2], [0, 2, 0])
     assert auc == 2
 
+
+def test_calc_auc_unsorted():
+    auc = calc_auc([2, 0, 1], [0, 0, 2])
+    assert auc == 2
 
 
 def test_calc_kel():
