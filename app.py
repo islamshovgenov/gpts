@@ -1,41 +1,18 @@
 import streamlit as st
+from src.data_loader import load_data, DataLoaderError
+from src.pk_workflow import compute_pk_and_stats
+from src.plot_utils import (confidence_interval_plot, individual_profile, mean_curves, mean_sd_plot, all_profiles, radar_plot, studentized_residuals_plot, studentized_group_plot)
+from src.export_utils import export_be_tables, export_be_result, export_power_table
 import pandas as pd
 import numpy as np
 import io
-from viz import (
-    plot_ci,
-    plot_individual,
-    plot_mean_curves,
-    plot_individual_log,
-    plot_mean_sd,
-    plot_all_individual_profiles,
-    plot_radar_auc_cmax,
-    plot_studentized_residuals,
-    plot_studentized_group,
-    plot_group_iqr,
-    plot_individual_changes,
-    plot_vitals_dynamics,
-)
-from docx_tools import (
-    export_individual_pk_tables,
-    export_auc_residual_tables,
-    export_log_transformed_pk_tables,
-    export_sas_anova_report,
-    export_log_ci_tables,
-    export_be_result_table,
-    export_power_analysis_table
-)
 from stat_tools import (
-    log_diff_stats,
     ci_calc,
-    anova_log,
     calc_swr,
-    identify_be_outlier_and_recommend,
-    add_mse_se_to_pivot,
     get_cv_intra_anova,
-    get_gmr_lsmeans,
     compute_vitals_iqr,
-    compute_group_iqr
+    compute_group_iqr,
+    make_stat_report_table
 )
 from blood_analysis import (
     load_oak_sheet,
@@ -46,11 +23,6 @@ from blood_analysis import (
     load_vitals_sheet,
     load_stage_order
 )
-from loader import (
-    load_randomization,
-    load_timepoints,
-    parse_excel_files)
-from pk import compute_pk
 from docx import Document
 import matplotlib.pyplot as plt
 from scipy.stats import gmean
@@ -155,130 +127,40 @@ if enable_safety:
 
 
 if rand_file and time_file and xlsx_files:
-    rand_dict = load_randomization(rand_file)
-    # —————— ПРОВЕРКА БАЛАНСА ПОСЛЕДОВАТЕЛЬНОСТЕЙ ——————
-    from collections import Counter
-
-    seq_counts = Counter(rand_dict.values())
-    tr_count = seq_counts.get("TR", 0)
-    rt_count = seq_counts.get("RT", 0)
-    if tr_count != rt_count:
-        st.error(
-            f"Нарушен баланс последовательностей в файле рандомизации: "
-            f"TR = {tr_count}, RT = {rt_count}. Проверьте правильность заполнения."
-        )
-        st.stop()
-    # ——————————————————————————————————————————————
-    time_dict = load_timepoints(time_file)
     try:
-        df_raw = parse_excel_files(xlsx_files, rand_dict, time_dict)
-        df = df_raw.copy()
-    except KeyError as ke:
-        st.error(f"Неверная структура входных файлов: не найдена колонка {ke}")
+        df, rand_dict, time_dict = load_data(rand_file, time_file, xlsx_files)
+    except DataLoaderError as e:
+        st.error(str(e))
         st.stop()
     except Exception as e:
-        st.error(f"Ошибка при загрузке/парсинге файлов:\n{e}")
+        st.error(f"Ошибка при загрузке данных:\n{e}")
         st.stop()
+
     st.success(f"Загружено значений: {len(df)}")
     st.dataframe(df.head())
-    # проверка точек
-    anal_points = df["Time"].nunique()
-    file_points = len(time_dict)
-    # —————— ПРОВЕРКА ФАЙЛА ТОЧЕК vs АНАЛИТИКА ——————
-    file_points = len(time_dict)
-    if 0 in map(float, time_dict.values()):
-        # исключаем нулевую точку из сравнения
-        file_points -= 1
-    anal_points = df["Time"].nunique()
-    if file_points != anal_points:
-        st.error(
-            f"Ошибка в файле точек: найдено {file_points} точек, "
-            f"а в данных аналитика их {anal_points}. "
-            "Проверьте файл точек."
-        )
-        st.stop()
-    # ————————————————————————————————————————
 
-
-    # ———————— ПРОВЕРКА “ВСЕХ” СУБЪЕКТОВ ————————
-    # какие субъекты были в файле рандомизации?
-    expected_subjects = set(rand_dict.keys())
-    # какие субъекты действительно попали в df?
-    found_subjects = set(df["Subject"].unique())
-
-    # вычисляем, кого не хватило
-    missing = expected_subjects - found_subjects
-    if missing:
-        st.error(
-            "Отсутствуют концентрации для субъектов из файла рандомизации: "
-            f"{sorted(missing)}. Проверьте названия или формат файлов аналитика."
-        )
-        st.stop()
-    # Кого лишнего нашли в аналитике?
-    unexpected = found_subjects - expected_subjects
-    if unexpected:
-        st.error(
-            "В файлах аналитика есть субъекты, которых нет в файле рандомизации: "
-            f"{sorted(unexpected)}. Проверьте файл рандомизации."
-        )
-        st.stop()
-    # ————————————————————————————————————————
-
-    # PK
     try:
-        pk_table = compute_pk(df, dose_test=dose_test, dose_ref=dose_ref)
-    except KeyError as ke:
-        st.error(f"При расчёте PK не найдена колонка {ke}")
-        st.stop()
-    except ZeroDivisionError:
-        st.error("Деление на ноль при расчёте PK — проверьте порог LLOQ и min_points")
-        st.stop()
+        pk_table, pivot, stats = compute_pk_and_stats(df, dose_test=dose_test, dose_ref=dose_ref)
     except Exception as e:
         st.error(f"Неожиданная ошибка при вычислении PK:\n{e}")
         st.stop()
+
     st.subheader("📋 PK-параметры")
     st.dataframe(pk_table)
 
-    # 👇 Исправляем названия колонок с нестандартными символами (₀–∞)
-    '''pk_table = pk_table.rename(columns={
-        "AUC₀–t": "AUC0-t",
-        "AUC₀–∞": "AUC0-inf",
-    })'''
-    # GMR, CI
-    try:
-        pivot = pk_table.pivot(
-            index="Subject",
-            columns="Treatment",
-            values=[
-            "Cmax", "AUC0-t", "AUC0-inf",
-            "Tmax", "T1/2", "Kel",
-            "CL", "Vd", "MRT", "Tlag"
-                                    ]
-                                )
+    gmr_auc, gmr_aucinf, gmr_cmax = stats["gmr"]
+    ci_l_auc, ci_l_aucinf, ci_l_cmax = stats["ci_low"]
+    ci_u_auc, ci_u_aucinf, ci_u_cmax = stats["ci_up"]
+    cv_auc, cv_aucinf, cv_cmax = stats["cv"]
+    anova_cmax = stats["anova"]["cmax"]
+    anova_auc = stats["anova"]["auc"]
+    anova_aucinf = stats["anova"]["aucinf"]
+    sWR_cmax, sWR_auc, sWR_aucinf = stats["swr"]
+    outlier = stats["outlier"]
+    recs = stats["recs"]
 
-        pivot.columns = [
-            f"{param}_{trt}"
-            for param, trt in pivot.columns
-                ]
-        required = [
-        "Cmax_Test", "Cmax_Ref",
-        "AUC0-t_Test", "AUC0-t_Ref",
-        "AUC0-inf_Test", "AUC0-inf_Ref",
-            ]
-        pivot = pivot.dropna(subset=required)
-        pivot = log_diff_stats(pivot)
-        pivot = add_mse_se_to_pivot(pivot)
-    except KeyError as ke:
-        st.error(f"При статистическом анализе не найдена колонка {ke}")
-        st.stop()
-    except Exception as e:
-        st.error(f"Ошибка в статистических вычислениях:\n{e}")
-        st.stop()
 
-    gmr_auc, ci_l_auc, ci_u_auc = get_gmr_lsmeans(pk_table, "AUC0-t")
-    gmr_aucinf, ci_l_aucinf, ci_u_aucinf = get_gmr_lsmeans(pk_table, "AUC0-inf")
-    gmr_cmax, ci_l_cmax, ci_u_cmax = get_gmr_lsmeans(pk_table, "Cmax")
-     # === Результирующая таблица с проверкой биоэквивалентности ===
+    # === Результирующая таблица с проверкой биоэквивалентности ===
     st.subheader("📋 2. Результаты расчёта")
 
     result_df = pd.DataFrame({
@@ -301,15 +183,7 @@ if rand_file and time_file and xlsx_files:
     }))
 
     # Проверяем биоэквивалентность по Cmax и, при её нарушении,
-    # выявляем «виновника» и выдаём рекомендации:
-    outlier, recs = identify_be_outlier_and_recommend(
-        df_conc=df,            # ваш DataFrame концентраций (calcconc)
-        pk_df=pk_table,        # DataFrame с PK-параметрами
-        param="Cmax",          # параметр для проверки
-        ci_lower=ci_l_cmax,    # нижняя граница CI
-        ci_upper=ci_u_cmax,    # верхняя граница CI
-        be_limits=(0.8, 1.25)   # 80–125%
-    )
+    # выводим рекомендации для исправления
 
     if outlier is not None:
         st.warning(f"⚠️ Биоэквивалентность по Cmax НЕ соблюдена. Основной «виновник» — доброволец {outlier}.")
@@ -324,14 +198,11 @@ if rand_file and time_file and xlsx_files:
     st.write(f"Cmax: {gmr_cmax*100:.2f}% [{ci_l_cmax*100:.2f}% – {ci_u_cmax*100:.2f}%]")
     st.write(f"AUC₀–t: {gmr_auc*100:.2f}% [{ci_l_auc*100:.2f}% – {ci_u_auc*100:.2f}%]")
 
-    from stat_tools import make_stat_report_table  # вверху файла, если ещё не импортировано
-
-
     # ANOVA
     st.subheader("📊 ANOVA (лог-преобразованные значения)")
-    anova_cmax = anova_log(pk_table, "Cmax")
-    anova_auc = anova_log(pk_table.rename(columns={"AUC0-t": "AUC0t"}), "AUC0t")
-    anova_aucinf = anova_log(pk_table.rename(columns={"AUC0-inf": "AUC0inf"}), "AUC0inf")
+    anova_cmax = stats["anova"]["cmax"]
+    anova_auc = stats["anova"]["auc"]
+    anova_aucinf = stats["anova"]["aucinf"]
 
     st.write("**Cmax**")
     _, result_cmax, _, _ = anova_cmax
@@ -412,8 +283,14 @@ if rand_file and time_file and xlsx_files:
     # Графики
     st.subheader("📈 График доверительных интервалов")
     try:
-        fig_ci = plot_ci([gmr_cmax*100, gmr_auc*100], [ci_l_cmax*100, ci_l_auc*100],
-                        [ci_u_cmax*100, ci_u_auc*100], ["Cmax", "AUC0-t"])
+        fig_ci = confidence_interval_plot(
+            gmr_cmax,
+            gmr_auc,
+            ci_l_cmax,
+            ci_l_auc,
+            ci_u_cmax,
+            ci_u_auc,
+        )
         st.pyplot(fig_ci)
         plt.close(fig_ci)
     except Exception as e:
@@ -422,34 +299,34 @@ if rand_file and time_file and xlsx_files:
 
     st.subheader("📉 Индивидуальные кривые")
     subj = st.selectbox("Выберите добровольца", sorted(df["Subject"].unique()))
-    st.pyplot(plot_individual(df, subj, test_name, ref_name))
+    st.pyplot(individual_profile(df, subj, test_name, ref_name))
     st.subheader("📉 Индивидуальная кривая (логарифмическая шкала)")
-    st.pyplot(plot_individual_log(df, subj, test_name, ref_name))
+    st.pyplot(individual_profile(df, subj, test_name, ref_name, log=True))
     #st.subheader("📉 Индивидуальная кривая (логарифмическая шкала)")
     #st.pyplot(plot_individual_log(df, subj, test_name, ref_name))
 
     st.subheader("📈 Средние кривые (линейная шкала)")
     mean_df = df.groupby(["Treatment", "Time"])["Concentration"].mean().reset_index()
-    st.pyplot(plot_mean_curves(mean_df, test_name, ref_name))
+    st.pyplot(mean_curves(mean_df, test_name, ref_name))
 
 
     st.subheader("📈 Средние кривые (логарифмическая шкала)")
-    st.pyplot(plot_mean_curves(mean_df, test_name, ref_name, logscale=True))
+    st.pyplot(mean_curves(mean_df, test_name, ref_name, log=True))
 
     st.subheader("📊 Тестовый препарат: среднее ± 2×SD")
-    fig_test = plot_mean_sd(df, treatment_label="Test", title=test_name)
+    fig_test = mean_sd_plot(df, label="Test", title=test_name)
     st.pyplot(fig_test)
 
     st.subheader("📊 Референтный препарат: среднее ± 2×SD")
-    fig_ref = plot_mean_sd(df, treatment_label="Ref", title=ref_name)
+    fig_ref = mean_sd_plot(df, label="Ref", title=ref_name)
     st.pyplot(fig_ref)
 
     st.subheader("📈 Индивидуальные профили – Тестовый препарат")
-    fig_test_ind = plot_all_individual_profiles(df, "Test", f"Тестируемый препарат – {test_name}")
+    fig_test_ind = all_profiles(df, "Test", f"Тестируемый препарат – {test_name}")
     st.pyplot(fig_test_ind)
 
     st.subheader("📈 Индивидуальные профили – Референтный препарат")
-    fig_ref_ind = plot_all_individual_profiles(df, "Ref", f"Препарат сравнения – {ref_name}")
+    fig_ref_ind = all_profiles(df, "Ref", f"Препарат сравнения – {ref_name}")
     st.pyplot(fig_ref_ind)
 
 
@@ -659,12 +536,12 @@ if rand_file and time_file and xlsx_files:
     st.markdown("### 📡 Радар-диаграммы параметров AUC₀–t и Cmax")
 
     if st.checkbox("Показать радарные диаграммы для AUC₀–t и Cmax"):
-        fig = plot_radar_auc_cmax(
+        fig = radar_plot(
             pivot,
             test_label=test_name,
             ref_label=ref_name,
             dose_test=dose_test,
-            dose_ref=dose_ref
+            dose_ref=dose_ref,
         )
         st.pyplot(fig)
         plt.close(fig)
@@ -962,15 +839,17 @@ if rand_file and time_file and xlsx_files:
 
 
 
-        output_path = export_individual_pk_tables(
+        paths = export_be_tables(
             pk_table,
+            pivot,
             test_name=test_name,
             ref_name=ref_name,
             substance=substance,
             dose_test=dose_test,
             dose_ref=dose_ref,
-            save_path="Индивидуальные_PK_таблицы.docx"
         )
+
+        output_path = paths["individual_pk"]
 
         with open(output_path, "rb") as f:
             st.download_button(
@@ -982,15 +861,16 @@ if rand_file and time_file and xlsx_files:
     elif selected_table == "📄 Остаточная площадь AUC (Test + Ref)":
         st.markdown("### 📄 Сохранить таблицу в Word")
 
-        output_path = export_auc_residual_tables(
-            df=pk_table,
+        paths = export_be_tables(
+            pk_table,
+            pivot,
             test_name=test_name,
             ref_name=ref_name,
             substance=substance,
             dose_test=dose_test,
             dose_ref=dose_ref,
-            save_path="AUC_residual_tables.docx"
         )
+        output_path = paths["auc_residual"]
 
         with open(output_path, "rb") as f:
             st.download_button(
@@ -1002,15 +882,17 @@ if rand_file and time_file and xlsx_files:
     elif selected_table == "📄 ln(PK) значения: Test + Ref":
         st.markdown("### 📄 Сохранить логарифмически преобразованные значения в Word")
 
-        output_path = export_log_transformed_pk_tables(
-            pk_df=pk_table,
+        paths = export_be_tables(
+            pk_table,
+            pivot,
             test_name=test_name,
             ref_name=ref_name,
             substance=substance,
             dose_test=dose_test,
             dose_ref=dose_ref,
-            save_path="ln_PK_values.docx"
         )
+
+        output_path = paths["ln_pk"]
 
         with open(output_path, "rb") as f:
             st.download_button(
@@ -1022,12 +904,16 @@ if rand_file and time_file and xlsx_files:
     elif selected_table == "📄 ANOVA лог-преобразованные (SAS-отчёт)":
         st.markdown("### 📄 Генерация ANOVA-отчёта (SAS-подобный стиль)")
 
-        output_path = export_sas_anova_report(
-            pk_df=pk_table,
+        paths = export_be_tables(
+            pk_table,
+            pivot,
+            test_name=test_name,
+            ref_name=ref_name,
             substance=substance,
             dose_test=dose_test,
-            save_path="ANOVA_SAS_Report.docx"
+            dose_ref=dose_ref,
         )
+        output_path = paths["anova_report"]
 
         with open(output_path, "rb") as f:
             st.download_button(
@@ -1040,11 +926,16 @@ if rand_file and time_file and xlsx_files:
     elif selected_table == "📑 Остаточная вариация и CI лог-параметров":
         st.markdown("### 📄 Сохранить таблицу в Word")
 
-        output_path = export_log_ci_tables(
-            df=pivot,
+        paths = export_be_tables(
+            pk_table,
+            pivot,
+            test_name=test_name,
+            ref_name=ref_name,
             substance=substance,
-            save_path="log_CI_tables.docx"
+            dose_test=dose_test,
+            dose_ref=dose_ref,
         )
+        output_path = paths["log_ci"]
         with open(output_path, "rb") as f:
             st.download_button(
                 label="📥 Скачать DOCX",
@@ -1070,7 +961,7 @@ if rand_file and time_file and xlsx_files:
                 }
                 param = param_lookup.get(param_label, param_label)
 
-                fig = plot_studentized_residuals(pk_table, param=param, substance=substance)
+                fig = studentized_residuals_plot(pk_table, param=param, substance=substance)
                 st.pyplot(fig)
                 plt.close(fig)
         else:
@@ -1089,7 +980,7 @@ if rand_file and time_file and xlsx_files:
                 param = param_lookup.get(param_label, param_label)
 
                 group = "Test" if pattern.group(2) == "T" else "Ref"
-                fig = plot_studentized_group(pk_table, param=param, group=group, substance=substance)
+                fig = studentized_group_plot(pk_table, param=param, group=group, substance=substance)
                 st.pyplot(fig)
                 plt.close(fig)
 
@@ -1098,11 +989,11 @@ if rand_file and time_file and xlsx_files:
 
         st.markdown("### 📊 Результаты оценки критериев биоэквивалентности")
 
-        output_path = export_be_result_table(
+        output_path = export_be_result(
             gmr_list=gmr_list,
             ci_low_list=ci_low_list,
             ci_up_list=ci_up_list,
-            cv_list=cv_list
+            cv_list=cv_list,
         )
 
         with open(output_path, "rb") as f:
@@ -1137,10 +1028,10 @@ if rand_file and time_file and xlsx_files:
         gmr_list_power = [ratio_auc_t, ratio_auc_inf, ratio_cmax]
         cv_list_power = [cv_auc_t, cv_auc_inf, cv_cmax]
 
-        output_path = export_power_analysis_table(
+        output_path = export_power_table(
             gmr_list=gmr_list_power,
             cv_list=cv_list_power,
-            n=len(pk_table["Subject"].unique())
+            n=len(pk_table["Subject"].unique()),
         )
 
         with open(output_path, "rb") as f:
