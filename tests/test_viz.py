@@ -130,4 +130,3 @@ def test_additional_plots():
     })
     fig_grp = plot_studentized_group(pk_df, param='Cmax', group='Test')
     assert isinstance(fig_grp, Figure)
-
