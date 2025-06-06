@@ -623,12 +623,10 @@ def export_power_analysis_table(gmr_list, cv_list, n=32, alpha=0.05, save_path="
     hdr[8].text = "β"
 
     params = ["AUC₀–t", "AUC₀–∞", "Cmax"]
-    powers = []
 
     for param, gmr, cv in zip(params, gmr_list, cv_list):
         row = table.add_row().cells
         power = power_equivalence(gmr, cv, n=n, alpha=alpha)
-        powers.append(power)
 
         row[0].text = f"тест по {param}"
         row[1].text = f"{power:.5f}"
