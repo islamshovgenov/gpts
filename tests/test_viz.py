@@ -10,7 +10,6 @@ from viz import (
     plot_all_individual_profiles,
     plot_radar_auc_cmax,
     plot_studentized_group,
-
     plot_mean_curves,
     plot_mean_sd,
     plot_studentized_residuals,
