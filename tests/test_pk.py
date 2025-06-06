@@ -22,6 +22,8 @@ def make_simple_df():
 
 
 
+# ---- calc_auc -------------------------------------------------------------
+
 
 def test_calc_auc_simple():
     auc = calc_auc([0, 1, 2], [0, 2, 0])
@@ -58,6 +60,7 @@ def test_calc_kel_insufficient_post_tmax():
     assert n == 3  # points after Tmax
 
 
+# ---- compute_pk -----------------------------------------------------------
 
 def test_compute_pk_single():
     df = make_simple_df()
