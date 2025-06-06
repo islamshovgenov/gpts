@@ -43,3 +43,24 @@ def test_export_individual_pk_tables(tmp_path):
     path = export_individual_pk_tables(df, "Tst", "Ref", "Sub", 100, 100, save_path=str(out))
     assert Path(path).is_file()
 
+
+
+def test_export_log_ci_and_be_tables(tmp_path):
+    df = pd.DataFrame({
+        'log_AUC0-t_diff': [0.1],
+        'log_AUC0-inf_diff': [0.1],
+        'log_Cmax_diff': [0.2],
+        'SE_log_AUC0-t': [0.05],
+        'SE_log_AUC0-inf': [0.05],
+        'SE_log_Cmax': [0.07],
+        'MSE_log_AUC0-t': [0.001],
+        'MSE_log_AUC0-inf': [0.001],
+        'MSE_log_Cmax': [0.002],
+    })
+    from docx_tools import export_log_ci_tables, export_be_result_table
+    ci_path = export_log_ci_tables(df, 'Sub', save_path=str(tmp_path / 'ci.docx'))
+    assert Path(ci_path).is_file()
+
+    be_path = export_be_result_table([1.0, 1.1, 1.2], [0.9, 1.0, 1.1], [1.1, 1.2, 1.3], [10, 15, 20], save_path=str(tmp_path / 'be.docx'))
+    assert Path(be_path).is_file()
+
