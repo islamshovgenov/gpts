@@ -581,15 +581,6 @@ def export_be_result_table(gmr_list, ci_low_list, ci_up_list, cv_list, save_path
         row[5].paragraphs[0].add_run().add_picture(fig_path, width=Inches(1.8))
         os.remove(fig_path)
 
-        ax.axis("off")
-
-        fig_path = f"tmp_ci_{p}.png"
-        plt.savefig(fig_path, bbox_inches="tight", dpi=300)
-        plt.close(fig)
-
-        row[5].paragraphs[0].add_run().add_picture(fig_path, width=Inches(1.8))
-        os.remove(fig_path)
-
     doc.save(save_path)
     return save_path
 
