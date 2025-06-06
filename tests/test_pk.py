@@ -21,9 +21,11 @@ def make_simple_df():
     return pd.DataFrame(data)
 
 
+
 def test_calc_auc_simple():
     auc = calc_auc([0, 1, 2], [0, 2, 0])
     assert auc == 2
+
 
 
 def test_calc_kel():
@@ -35,6 +37,22 @@ def test_calc_kel():
     assert n == 5
 
 
+def test_calc_kel_insufficient_total():
+    concs = [0, 0.5, 0.4]
+    times = [0, 1, 2]
+    kel, t_half, n = calc_kel(concs, times, min_points=4)
+    assert np.isnan(kel) and np.isnan(t_half)
+    assert n == 0
+
+def test_calc_kel_insufficient_post_tmax():
+    concs = [1, 2, 3, 2, 1]
+    times = [0, 1, 2, 3, 4]
+    kel, t_half, n = calc_kel(concs, times, min_points=4, lloq=0.5)
+    assert np.isnan(kel) and np.isnan(t_half)
+    assert n == 3  # points after Tmax
+
+
+
 def test_compute_pk_single():
     df = make_simple_df()
     pk_table = compute_pk(df)
@@ -43,4 +61,11 @@ def test_compute_pk_single():
     assert row['Tmax'] == 1
     assert np.isclose(row['AUC0-t'], 29.0)
     assert np.isclose(row['AUC0-inf'], 34.112444, atol=1e-6)
+
+def test_compute_pk_no_positive():
+    df = make_simple_df()
+    df['Concentration'] = 0.0
+    pk_table = compute_pk(df)
+    row = pk_table.iloc[0]
+    assert row[['Cmax','Tmax','AUC0-t','AUC0-inf','Kel','T1/2','N_el','CL','Vd','MRT','Tlag']].isna().all()
 
