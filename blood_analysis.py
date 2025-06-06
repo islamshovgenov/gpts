@@ -267,7 +267,7 @@ def load_stage_order(
     raw = pd.read_excel(xls, sheet_name=sheet, header=None, dtype=str)
 
     # 3) Ищем точную ячейку «Скрининг» (по подстроке)
-    mask = raw.applymap(lambda x: isinstance(x, str) and "скринин" in x.lower())
+    mask = raw.apply(lambda col: col.str.contains("скринин", case=False, na=False))
     locs = list(zip(*mask.values.nonzero()))
     if not locs:
         raise KeyError(f"Не найден заголовок 'Скрининг' на листе '{sheet}'")

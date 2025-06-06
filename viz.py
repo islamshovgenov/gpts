@@ -50,6 +50,7 @@ def plot_ci(ratios, lowers, uppers, labels):
     ax.set_xlim(70, 130)
     ax.set_xlabel("Отношение T/R (%)")
     ax.grid(True, axis='x', linestyle=':', alpha=0.5)
+    plt.close(fig)
     return fig
 
 def plot_individual(df, subject, test_name="Test", ref_name="Reference"):
@@ -65,6 +66,7 @@ def plot_individual(df, subject, test_name="Test", ref_name="Reference"):
     ax.set_ylabel("Концентрация")
     ax.legend()
     ax.grid(True)
+    plt.close(fig)
     return fig
 
 
@@ -120,6 +122,7 @@ def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=F
     # 5) ПОДГОНКА ОТСТУПОВ
     fig.tight_layout(rect=[0, 0, 1, 0.95])
 
+    plt.close(fig)
     return fig
 
 def plot_individual_log(df, subject, test_name="Test", ref_name="Reference", terminal_points=3):
@@ -175,6 +178,7 @@ def plot_individual_log(df, subject, test_name="Test", ref_name="Reference", ter
                          "т.к. логарифм нуля не существует", ha='center', fontsize=8)
 
     fig.tight_layout()
+    plt.close(fig)
     return fig
 
 def plot_mean_sd(df, treatment_label, title=None):
@@ -209,7 +213,7 @@ def plot_mean_sd(df, treatment_label, title=None):
     ax.legend(loc="upper right")
     ax.grid(True, linestyle=":", linewidth=0.5)
     fig.tight_layout()
-
+    plt.close(fig)
     return fig
 
 def plot_all_individual_profiles(df, treatment_label, title=None):
@@ -341,6 +345,7 @@ def plot_radar_auc_cmax(
     )
 
     plt.tight_layout()
+    plt.close(fig)
     return fig
 
 
@@ -397,6 +402,7 @@ def plot_studentized_group(pk_df, param="Cmax", group="Test", substance="Пре�
     ax.set_title(f"studentized residuals\nдля показателя ln({param})_{group[0]}\n\n{substance}")
     ax.grid(True, linestyle=':', alpha=0.4)
     ax.legend(loc="upper right")
+    plt.close(fig)
     return fig
 
 def plot_group_dynamics(
@@ -433,6 +439,7 @@ def plot_group_dynamics(
     # —————————————————————————————————————————————
 
     plt.tight_layout()
+    plt.close(fig)
     return fig
 
 def plot_group_iqr(
@@ -479,12 +486,14 @@ def plot_group_iqr(
         else:
             # если нет ни в y_scale, ни в Y_SCALES — не трогаем ось
             plt.tight_layout()
+            plt.close(fig)
             return fig
 
     ax.set_ylim(y_min, y_max)
     ax.set_yticks(np.arange(y_min, y_max + 1e-8, y_step))
 
     plt.tight_layout()
+    plt.close(fig)
     return fig
 
 
@@ -543,6 +552,7 @@ def plot_individual_changes(df, param_col, title, units,
     ax.legend(title="", loc="upper left", frameon=False, fontsize=9)
 
     fig.tight_layout()
+    plt.close(fig)
     return fig
 
 
@@ -611,4 +621,5 @@ def plot_vitals_dynamics(
     ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.7)
     ax.legend(title="Группа", loc="upper right", frameon=False)
     fig.tight_layout()
+    plt.close(fig)
     return fig
