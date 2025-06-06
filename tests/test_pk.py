@@ -21,17 +21,18 @@ def make_simple_df():
     return pd.DataFrame(data)
 
 
-# ---- calc_auc -------------------------------------------------------------
+
 
 def test_calc_auc_simple():
     auc = calc_auc([0, 1, 2], [0, 2, 0])
     assert auc == 2
 
+
 def test_calc_auc_unsorted():
     auc = calc_auc([2, 0, 1], [0, 0, 2])
     assert auc == 2
 
-# ---- calc_kel -------------------------------------------------------------
+
 
 def test_calc_kel():
     concs = [0, 10, 8, 6, 4, 2]
@@ -40,6 +41,7 @@ def test_calc_kel():
     assert np.isclose(kel, 0.3912023, atol=1e-6)
     assert np.isclose(t_half, 1.7718382, atol=1e-6)
     assert n == 5
+
 
 def test_calc_kel_insufficient_total():
     concs = [0, 0.5, 0.4]
@@ -55,7 +57,7 @@ def test_calc_kel_insufficient_post_tmax():
     assert np.isnan(kel) and np.isnan(t_half)
     assert n == 3  # points after Tmax
 
-# ---- compute_pk -----------------------------------------------------------
+
 
 def test_compute_pk_single():
     df = make_simple_df()
