@@ -44,6 +44,7 @@ def test_export_individual_pk_tables(tmp_path):
     assert Path(path).is_file()
 
 
+
 def test_export_log_ci_and_be_tables(tmp_path):
     df = pd.DataFrame({
         'log_AUC0-t_diff': [0.1],
@@ -62,3 +63,4 @@ def test_export_log_ci_and_be_tables(tmp_path):
 
     be_path = export_be_result_table([1.0, 1.1, 1.2], [0.9, 1.0, 1.1], [1.1, 1.2, 1.3], [10, 15, 20], save_path=str(tmp_path / 'be.docx'))
     assert Path(be_path).is_file()
+
