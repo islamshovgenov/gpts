@@ -21,17 +21,20 @@ def make_simple_df():
     return pd.DataFrame(data)
 
 
+# ne5r0q-codex/создать-тесты-и-валидацию-для-кода
 # ---- calc_auc -------------------------------------------------------------
 
 def test_calc_auc_simple():
     auc = calc_auc([0, 1, 2], [0, 2, 0])
     assert auc == 2
 
+
 def test_calc_auc_unsorted():
     auc = calc_auc([2, 0, 1], [0, 0, 2])
     assert auc == 2
 
 # ---- calc_kel -------------------------------------------------------------
+
 
 def test_calc_kel():
     concs = [0, 10, 8, 6, 4, 2]
@@ -40,6 +43,7 @@ def test_calc_kel():
     assert np.isclose(kel, 0.3912023, atol=1e-6)
     assert np.isclose(t_half, 1.7718382, atol=1e-6)
     assert n == 5
+
 
 def test_calc_kel_insufficient_total():
     concs = [0, 0.5, 0.4]
@@ -57,6 +61,7 @@ def test_calc_kel_insufficient_post_tmax():
 
 # ---- compute_pk -----------------------------------------------------------
 
+
 def test_compute_pk_single():
     df = make_simple_df()
     pk_table = compute_pk(df)
@@ -65,6 +70,7 @@ def test_compute_pk_single():
     assert row['Tmax'] == 1
     assert np.isclose(row['AUC0-t'], 29.0)
     assert np.isclose(row['AUC0-inf'], 34.112444, atol=1e-6)
+
 
 def test_compute_pk_no_positive():
     df = make_simple_df()
