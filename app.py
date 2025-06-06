@@ -26,10 +26,6 @@ from blood_analysis import (
 from docx import Document
 import matplotlib.pyplot as plt
 from scipy.stats import gmean
-import math
-
-
-
 
 st.set_page_config(page_title="Биоэквивалентность", layout="wide")
 st.title("📊 Расчёт биоэквивалентности")
