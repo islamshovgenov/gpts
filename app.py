@@ -23,6 +23,11 @@ from blood_analysis import (
     load_vitals_sheet,
     load_stage_order
 )
+from viz import (
+    plot_group_iqr,
+    plot_individual_changes,
+    plot_vitals_dynamics,
+)
 from docx import Document
 import matplotlib.pyplot as plt
 from scipy.stats import gmean
@@ -377,8 +382,6 @@ if rand_file and time_file and xlsx_files:
 
     if enable_bio and subject_file:
         from blood_analysis import load_bhak_sheet
-        from stat_tools import compute_group_iqr
-        from viz import plot_group_iqr
 
         # 1) Загружаем данные БХАК
         bhak_df = load_bhak_sheet(subject_file)
@@ -418,7 +421,6 @@ if rand_file and time_file and xlsx_files:
             plt.close(fig)
     # 📈 Индивидуальные изменения (БХАК)
     if st.checkbox("📈 Индивидуальные изменения (БХАК)", key="bhak_individual"):
-        from viz import plot_individual_changes
         for param, (title, unit) in bhak_params.items():
             fig = plot_individual_changes(
                 bhak_df,
@@ -432,8 +434,6 @@ if rand_file and time_file and xlsx_files:
 
     if enable_oam and subject_file:
         from blood_analysis import load_oam_sheet
-        from stat_tools import compute_group_iqr
-        from viz import plot_group_iqr
 
         # 1) Читаем лист ОАМ
         oam_df = load_oam_sheet(subject_file)
@@ -470,7 +470,6 @@ if rand_file and time_file and xlsx_files:
             plt.close(fig)
     # 📈 Индивидуальные изменения (ОАМ)
     if st.checkbox("📈 Индивидуальные изменения (ОАМ)", key="oam_individual"):
-        from viz import plot_individual_changes
         for param, (title, unit) in oam_params.items():
             fig = plot_individual_changes(
                 oam_df,
