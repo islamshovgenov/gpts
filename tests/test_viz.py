@@ -10,6 +10,7 @@ from viz import (
     plot_all_individual_profiles,
     plot_radar_auc_cmax,
     plot_studentized_group,
+
     plot_mean_curves,
     plot_mean_sd,
     plot_studentized_residuals,
@@ -130,4 +131,3 @@ def test_additional_plots():
     })
     fig_grp = plot_studentized_group(pk_df, param='Cmax', group='Test')
     assert isinstance(fig_grp, Figure)
-
