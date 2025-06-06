@@ -2,6 +2,10 @@ import io
 import pandas as pd
 import re
 import numpy as np
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format="%(levelname)s:%(message)s")
 
 def load_randomization(file):
     df = pd.read_csv(file, encoding="utf-8-sig")
@@ -25,7 +29,11 @@ def parse_excel_files(xlsx_files, rand_dict, time_dict):
                 # Обычная строка пути
                 xls = pd.ExcelFile(uploaded_file)
         except Exception as e:
-            print(f"[WARNING] Невозможно открыть файл {getattr(uploaded_file,'name',uploaded_file)} как Excel: {e}")
+            logging.warning(
+                "Невозможно открыть файл %s как Excel: %s",
+                getattr(uploaded_file, 'name', uploaded_file),
+                e,
+            )
             continue
 
         # ------ Новый блок: формат CT, конверсия pg→µg ------
@@ -38,7 +46,7 @@ def parse_excel_files(xlsx_files, rand_dict, time_dict):
                 'Concentration, Period 2'
             }
             if required.issubset(df_ct.columns):
-                print(f"→ Загружаем CT-формат из {uploaded_file}")
+                logging.warning("\u2192 Загружаем CT-формат из %s", uploaded_file)
                 for _, row in df_ct.iterrows():
                     if pd.isna(row['Subject']) or pd.isna(row['Time']):
                         continue
@@ -68,8 +76,8 @@ def parse_excel_files(xlsx_files, rand_dict, time_dict):
                         ])
                 continue
             else:
-                print(xls.sheet_names)
-                print(df_ct.columns.tolist())
+                logging.warning("Sheet names: %s", xls.sheet_names)
+                logging.warning("CT columns: %s", df_ct.columns.tolist())
 
         for sheet in xls.sheet_names:
             if sheet == "CT" or sheet == "ValueList_Helper":
