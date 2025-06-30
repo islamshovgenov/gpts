@@ -11,6 +11,7 @@ class DummyFile:
 
 def make_app(monkeypatch, tmp_path):
     monkeypatch.setattr(st.sidebar, "file_uploader", lambda *a, **k: DummyFile() if not k.get('accept_multiple_files') else [DummyFile()])
+    monkeypatch.setattr(st.sidebar, "multiselect", lambda *a, **k: [])
     monkeypatch.setattr(st, "file_uploader", lambda *a, **k: DummyFile())
     monkeypatch.setattr(pd.DataFrame, "style", property(lambda self: types.SimpleNamespace(format=lambda *a, **k: self)))
 

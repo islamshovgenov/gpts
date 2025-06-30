@@ -20,6 +20,8 @@ class DummySidebar:
         return options[0]
     def checkbox(self, label, **kw):
         return False
+    def multiselect(self, label, options, **kw):
+        return []
     def subheader(self, *a, **k):
         pass
     def header(self, *a, **k):

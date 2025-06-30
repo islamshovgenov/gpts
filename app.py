@@ -140,6 +140,12 @@ if rand_file and time_file and xlsx_files:
     st.success(f"Загружено значений: {len(df)}")
     st.dataframe(df.head())
 
+    subjects = sorted(df["Subject"].astype(str).unique())
+    excluded = st.sidebar.multiselect("Исключить добровольцев", subjects)
+    if excluded:
+        df = df[~df["Subject"].astype(str).isin(excluded)]
+        st.info("Исключены добровольцы: " + ", ".join(excluded))
+
     try:
         pk_table, pivot, stats = compute_pk_and_stats(df, dose_test=dose_test, dose_ref=dose_ref)
     except Exception as e:
