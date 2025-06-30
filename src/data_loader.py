@@ -23,9 +23,13 @@ def load_data(rand_file, time_file, xlsx_files):
     df = parse_excel_files(xlsx_files, rand_dict, time_dict)
 
     file_points = len(time_dict)
-    if 0 in map(float, time_dict.values()):
+    time_values = set(map(float, time_dict.values()))
+    analytic_times = set(df["Time"].unique())
+
+    if 0 in time_values and 0 not in analytic_times:
         file_points -= 1
-    anal_points = df["Time"].nunique()
+
+    anal_points = len(analytic_times)
     if file_points != anal_points:
         raise DataLoaderError(
             f"Timepoints mismatch: {file_points} in file vs {anal_points} in data"
