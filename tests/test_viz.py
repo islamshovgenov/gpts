@@ -38,7 +38,7 @@ def test_plot_ci_basic():
 def test_plot_individual_and_mean():
     df = make_basic_df()
     fig1 = plot_individual(df, 1, "T", "R")
-    fig2 = plot_mean_curves(df, "T", "R")
+    fig2 = plot_mean_curves(df, "T", "R", xlog=True)
     assert isinstance(fig1, Figure)
     assert isinstance(fig2, Figure)
 
