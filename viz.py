@@ -112,6 +112,9 @@ def plot_mean_curves(
     logscale=False,
     xticks=None,
     xlog=False,
+
+    xlog_threshold=1.0,
+
 ):
     fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -157,7 +160,7 @@ def plot_mean_curves(
     ax.set_xticklabels([str(t) for t in x_ticks], fontsize=10, rotation=45, ha="right")
 
     if xlog:
-        ax.set_xscale("symlog", linthresh=1)
+        ax.set_xscale("symlog", linthresh=xlog_threshold)
 
     # 2.1) Перепромежуточные (минорные) тики по X — по желанию
     ax.xaxis.set_minor_locator(AutoMinorLocator(n=2))
