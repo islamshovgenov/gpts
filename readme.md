@@ -290,7 +290,7 @@ SAS-ANOVA-отчет (export_sas_anova_report)
 streamlit==1.29.1
 pandas>=1.5.0
 numpy>=1.23.0
-scipy>=1.9.0
+scipy>=1.10,<1.11
 statsmodels>=0.14.0
 matplotlib>=3.7.0
 python-docx>=0.8.11

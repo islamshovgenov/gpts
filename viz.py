@@ -114,6 +114,10 @@ def plot_mean_curves(
     xlog=False,
 
 
+    xlog=False,
+
+
+
 ):
     fig, ax = plt.subplots(figsize=(8, 5))
 
