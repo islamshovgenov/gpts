@@ -28,6 +28,7 @@ def individual_profile(df, subj, test_name, ref_name, log=False):
 
 
 def mean_curves(df, test_name, ref_name, log=False, times=None, xlog=False):
+    """Wrapper around :func:`plot_mean_curves` with keyword-only arguments."""
     return plot_mean_curves(
         df,
         test_name,
@@ -36,11 +37,6 @@ def mean_curves(df, test_name, ref_name, log=False, times=None, xlog=False):
         xticks=times,
         xlog=xlog,
     )
-
-
-
-def mean_curves(df, test_name, ref_name, log=False, times=None):
-    return plot_mean_curves(df, test_name, ref_name, logscale=log, xticks=times)
 
 
 
