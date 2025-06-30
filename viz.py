@@ -1,8 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import linregress, zscore
-from matplotlib.ticker import LogLocator, ScalarFormatter, MultipleLocator, AutoMinorLocator
+from matplotlib.ticker import (
+    LogLocator,
+    ScalarFormatter,
+    MultipleLocator,
+    AutoMinorLocator,
+)
 import pandas as pd
+
+
+def _style_axes(ax):
+    """Apply unified grid and remove top/right spines."""
+    ax.grid(True, linestyle=":", alpha=0.6)
+    for side in ("top", "right"):
+        if side in ax.spines:
+            ax.spines[side].set_visible(False)
 
 
 
@@ -39,33 +52,54 @@ Y_SCALES = {
 
 def plot_ci(ratios, lowers, uppers, labels):
     fig, ax = plt.subplots(figsize=(8, 2.5))
-    ax.errorbar(ratios, range(len(labels)),
-                xerr=[[r - l for r, l in zip(ratios, lowers)],
-                      [u - r for u, r in zip(uppers, ratios)]],
-                fmt='o', color='black', capsize=5)
-    ax.axvline(80, linestyle='--', color='red')
-    ax.axvline(125, linestyle='--', color='red')
+    err_low = [r - l for r, l in zip(ratios, lowers)]
+    err_hi = [u - r for u, r in zip(uppers, ratios)]
+    ax.errorbar(
+        ratios,
+        range(len(labels)),
+        xerr=[err_low, err_hi],
+        fmt="o",
+        color="black",
+        capsize=4,
+    )
+    ax.axvspan(80, 125, color="green", alpha=0.1)
+    ax.axvline(80, linestyle="--", color="red")
+    ax.axvline(125, linestyle="--", color="red")
     ax.set_yticks(range(len(labels)))
     ax.set_yticklabels(labels)
     ax.set_xlim(70, 130)
     ax.set_xlabel("Отношение T/R (%)")
-    ax.grid(True, axis='x', linestyle=':', alpha=0.5)
+    _style_axes(ax)
+    fig.tight_layout()
     plt.close(fig)
     return fig
 
 def plot_individual(df, subject, test_name="Test", ref_name="Reference"):
     fig, ax = plt.subplots(figsize=(8, 4))
     df_subj = df[df["Subject"] == subject]
+    colors = {"Test": "C0", "Ref": "C1"}
+    markers = {"Test": "o", "Ref": "s"}
     for period in sorted(df_subj["Period"].unique()):
         group = df_subj[df_subj["Period"] == period]
         treatment = group["Treatment"].iloc[0]
-        label = f"{test_name} (Period {period})" if treatment == "Test" else f"{ref_name} (Period {period})"
-        ax.plot(group["Time"], group["Concentration"], marker='o', label=label)
+        label = (
+            f"{test_name} (Period {period})"
+            if treatment == "Test"
+            else f"{ref_name} (Period {period})"
+        )
+        ax.plot(
+            group["Time"],
+            group["Concentration"],
+            marker=markers.get(treatment, "o"),
+            color=colors.get(treatment, "black"),
+            label=label,
+        )
     ax.set_title(f"Концентрация – Время для добровольца {subject}")
     ax.set_xlabel("Время (часы)")
     ax.set_ylabel("Концентрация")
     ax.legend()
-    ax.grid(True)
+    _style_axes(ax)
+    fig.tight_layout()
     plt.close(fig)
     return fig
 
@@ -73,16 +107,19 @@ def plot_individual(df, subject, test_name="Test", ref_name="Reference"):
 def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=False):
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Рисуем линии (краткие подписи test_name и ref_name)
+    colors = {"Test": "C0", "Ref": "C1"}
     for treatment in mean_df["Treatment"].unique():
         group = mean_df[mean_df["Treatment"] == treatment]
         label = test_name if treatment == "Test" else ref_name
         ax.plot(
             group["Time"],
             group["Concentration"],
-            marker='o', linestyle='-',
+            marker="o",
+            linestyle="-",
+            color=colors.get(treatment, "black"),
             label=label,
-            markersize=6, linewidth=1.5
+            markersize=6,
+            linewidth=1.5,
         )
 
     # Подписи
@@ -122,6 +159,8 @@ def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=F
     # 5) ПОДГОНКА ОТСТУПОВ
     fig.tight_layout(rect=[0, 0, 1, 0.95])
 
+    _style_axes(ax)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
     plt.close(fig)
     return fig
 
@@ -170,7 +209,7 @@ def plot_individual_log(df, subject, test_name="Test", ref_name="Reference", ter
     ax.set_title("В логарифмических координатах")
     ax.set_xlabel("Время (t) после приёма препарата, ч")
     ax.set_ylabel("Концентрация C(t), нг/мл")
-    ax.grid(True, which="both", linestyle=':', linewidth=0.5)
+    _style_axes(ax)
     ax.legend()
 
     # Примечание
@@ -198,9 +237,16 @@ def plot_mean_sd(df, treatment_label, title=None):
     label_sd = "- удвоенное значение стандартного отклонения (±SD)"
 
     # График с ошибками
-    ax.errorbar(stats["Time"], stats["mean"], yerr=stats["err"],
-                fmt=marker, color=color, ecolor=color, capsize=4,
-                label=label_mean)
+    ax.errorbar(
+        stats["Time"],
+        stats["mean"],
+        yerr=stats["err"],
+        fmt=marker,
+        color=color,
+        ecolor=color,
+        capsize=4,
+        label=label_mean,
+    )
 
     ax.plot(stats["Time"], stats["mean"], linestyle=":", color=color)
 
@@ -211,7 +257,7 @@ def plot_mean_sd(df, treatment_label, title=None):
         title = "Кривые средней концентрации ± 2×SD"
     ax.set_title(title)
     ax.legend(loc="upper right")
-    ax.grid(True, linestyle=":", linewidth=0.5)
+    _style_axes(ax)
     fig.tight_layout()
     plt.close(fig)
     return fig
@@ -226,7 +272,7 @@ def plot_all_individual_profiles(df, treatment_label, title=None):
 
     ax.set_xlabel("Время с момента приёма препарата, ч")
     ax.set_ylabel("Концентрация C(t), нг/мл")
-    ax.grid(True, linestyle=":", linewidth=0.5)
+    _style_axes(ax)
     if title:
         ax.set_title(title)
     else:
@@ -307,6 +353,7 @@ def plot_radar_auc_cmax(
         # — сетка: спицы (theta) и окружности (r)
         ax.xaxis.grid(True, color='grey', linewidth=1)
         ax.yaxis.grid(True, color='lightgrey', linewidth=0.5)
+        _style_axes(ax)
 
         # 7) заголовок в левом верхнем углу
         ax.set_title(
@@ -335,16 +382,7 @@ def plot_radar_auc_cmax(
         col_t="Cmax_Test", col_r="Cmax_Ref",
         title="Cmax", unit="нг/мл"
     )
-    # после того как вы построили все 2 радара:
     fig.tight_layout()
-    fig.savefig(
-        "radar_a4.png",  # или .jpg/.tif по вашему выбору
-        dpi=300,  # 300 точек на дюйм
-        bbox_inches="tight",
-        pad_inches=0.1  # небольшой отступ по краям
-    )
-
-    plt.tight_layout()
     plt.close(fig)
     return fig
 
@@ -377,7 +415,7 @@ def plot_studentized_residuals(pk_df, param="Cmax", substance="Препарат"
     ax.set_ylabel("Остатки (z-score)")
     ax.set_xlabel("Рандомизационный № добровольца")
     ax.set_title(f"studentized residuals\nдля разности ln({param}_T) – ln({param}_R)\n\n{substance}")
-    ax.grid(True, linestyle=':', alpha=0.4)
+    _style_axes(ax)
     ax.legend(loc="upper right")
 
     return fig
@@ -400,7 +438,7 @@ def plot_studentized_group(pk_df, param="Cmax", group="Test", substance="Пре�
     ax.set_ylabel("Остатки (z-score)")
     ax.set_xlabel("Рандомизационный № добровольца")
     ax.set_title(f"studentized residuals\nдля показателя ln({param})_{group[0]}\n\n{substance}")
-    ax.grid(True, linestyle=':', alpha=0.4)
+    _style_axes(ax)
     ax.legend(loc="upper right")
     plt.close(fig)
     return fig
