@@ -33,6 +33,16 @@ def make_ct_excel(path):
     with pd.ExcelWriter(path) as writer:
         df.to_excel(writer, sheet_name="CT", index=False, startrow=28)
 
+def make_ct_excel_with_zero(path):
+    df = pd.DataFrame({
+        "Subject": [1, 2, 1, 2],
+        "Time": [0, 0, 1, 1],
+        "Concentration, Period 1": [0, 0, 10, 0],
+        "Concentration, Period 2": [0, 0, 0, 10],
+    })
+    with pd.ExcelWriter(path) as writer:
+        df.to_excel(writer, sheet_name="CT", index=False, startrow=28)
+
 def test_parse_excel_files_ct(tmp_path):
     xls_path = tmp_path / "sample.xlsx"
     make_ct_excel(xls_path)
@@ -63,6 +73,17 @@ def test_data_loader_sequence_mismatch(tmp_path):
     make_ct_excel(xls_path)
     with pytest.raises(DataLoaderError):
         load_data(rand_file, time_file, [str(xls_path)])
+
+def test_data_loader_with_time_zero(tmp_path):
+    rand_file = tmp_path / "rand.csv"
+    rand_file.write_text("Subject,Sequence\n1,TR\n2,RT\n", encoding="utf-8")
+    time_file = tmp_path / "time.csv"
+    time_file.write_text("Code,Time\n00,0\n01,1\n", encoding="utf-8")
+    xls_path = tmp_path / "data.xlsx"
+    make_ct_excel_with_zero(xls_path)
+    df, rand_dict, time_dict = load_data(rand_file, time_file, [str(xls_path)])
+    assert 0 in df["Time"].values
+    assert time_dict["00"] == 0
 
 def test_log_diff_stats():
     df = pd.DataFrame({
