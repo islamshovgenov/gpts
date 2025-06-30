@@ -104,7 +104,13 @@ def plot_individual(df, subject, test_name="Test", ref_name="Reference"):
     return fig
 
 
-def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=False):
+def plot_mean_curves(
+    mean_df,
+    test_name="Test",
+    ref_name="Reference",
+    logscale=False,
+    xticks=None,
+):
     fig, ax = plt.subplots(figsize=(8, 5))
 
     colors = {"Test": "C0", "Ref": "C1"}
@@ -140,8 +146,11 @@ def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=F
         # 1.2) Минорные тики (2×10^n, 3×10^n, …, 9×10^n)
         ax.yaxis.set_minor_locator(LogLocator(base=10, subs=[2,3,4,5,6,7,8,9]))
 
-    # 2) ОСЬ X с «жёсткими» метками
-    x_ticks = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+    # 2) ОСЬ X с метками из файла временных точек (если переданы)
+    if xticks is None:
+        x_ticks = sorted(mean_df["Time"].unique())
+    else:
+        x_ticks = list(xticks)
     ax.set_xticks(x_ticks)
     ax.set_xticklabels([str(t) for t in x_ticks], fontsize=10)
 
@@ -157,10 +166,9 @@ def plot_mean_curves(mean_df, test_name="Test", ref_name="Reference", logscale=F
     ax.grid(which="minor", linestyle=':', linewidth=0.4, alpha=0.5)
 
     # 5) ПОДГОНКА ОТСТУПОВ
-    fig.tight_layout(rect=[0, 0, 1, 0.95])
-
     _style_axes(ax)
     fig.tight_layout(rect=[0, 0, 1, 0.95])
+
     plt.close(fig)
     return fig
 
