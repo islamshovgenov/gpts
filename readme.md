@@ -105,8 +105,8 @@
      Рисует горизонтальный график доверительных интервалов соотношения T/R в процентах, черты на 80% и 125%  
    - `plot_individual(df, subject, test_name, ref_name)`  
      Строит линейный график концентрации vs время для данного субъекта в обоих периодах (Test и Ref)  
-   - `plot_mean_curves(mean_df, test_name, ref_name, logscale=False)`  
-     Рисует усредненные кривые концентраций Test и Ref; при `logscale=True` – логарифмическая ось Y с настраиваемыми тиками  
+  - `plot_mean_curves(mean_df, test_name, ref_name, logscale=False, xticks=None, xlog=False)`
+    Рисует усредненные кривые концентраций Test и Ref; при `logscale=True` – логарифмическая ось Y с тиками, а `xlog=True` включает симлог‑масштаб времени для лучшей видимости ранних точек
    - `plot_individual_log(df, subject, test_name, ref_name, terminal_points=3)`  
      Строит логарифмические профили, вычисляет регрессию терминального участка (по последним N точкам), отображает регрессионную прямую  
    - `plot_mean_sd(df, treatment_label, title=None)`  
