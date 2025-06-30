@@ -38,8 +38,10 @@ def mean_curves(df, test_name, ref_name, log=False, times=None, xlog=False):
     )
 
 
+
 def mean_curves(df, test_name, ref_name, log=False, times=None):
     return plot_mean_curves(df, test_name, ref_name, logscale=log, xticks=times)
+
 
 
 

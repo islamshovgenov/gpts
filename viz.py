@@ -108,6 +108,12 @@ def plot_mean_curves(
     mean_df,
     test_name="Test",
     ref_name="Reference",
+
+    *,
+    logscale=False,
+    xticks=None,
+    xlog=False,
+
     logscale=False,
     xticks=None,
 
@@ -115,6 +121,7 @@ def plot_mean_curves(
 
 
     xlog=False,
+
 
 
 

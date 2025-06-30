@@ -324,11 +324,21 @@ if rand_file and time_file and xlsx_files:
         mean_curves(mean_df, test_name, ref_name, log=True, times=xticks, xlog=True)
     )
 
+
+    st.pyplot(mean_curves(mean_df, test_name, ref_name, times=xticks, xlog=True))
+
+
+    st.subheader("📈 Средние кривые (логарифмическая шкала)")
+    st.pyplot(
+        mean_curves(mean_df, test_name, ref_name, log=True, times=xticks, xlog=True)
+    )
+
     st.pyplot(mean_curves(mean_df, test_name, ref_name, times=xticks))
 
 
     st.subheader("📈 Средние кривые (логарифмическая шкала)")
     st.pyplot(mean_curves(mean_df, test_name, ref_name, log=True, times=xticks))
+
 
 
 
