@@ -26,8 +26,8 @@ def individual_profile(df, subj, test_name, ref_name, log=False):
     return plot_individual(df, subj, test_name, ref_name)
 
 
-def mean_curves(df, test_name, ref_name, log=False):
-    return plot_mean_curves(df, test_name, ref_name, logscale=log)
+def mean_curves(df, test_name, ref_name, log=False, times=None):
+    return plot_mean_curves(df, test_name, ref_name, logscale=log, xticks=times)
 
 
 def mean_sd_plot(df, label, title):
