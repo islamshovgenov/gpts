@@ -168,6 +168,7 @@ def plot_mean_curves(
     # 5) ПОДГОНКА ОТСТУПОВ
     _style_axes(ax)
     fig.tight_layout(rect=[0, 0, 1, 0.95])
+
     plt.close(fig)
     return fig
 
