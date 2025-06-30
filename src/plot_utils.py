@@ -36,8 +36,6 @@ def mean_curves(
     times=None,
     xlog=False,
     xlog_threshold=1.0,
-):
-def mean_curves(df, test_name, ref_name, log=False, times=None, xlog=False):
     """Wrapper around :func:`plot_mean_curves` with keyword-only arguments."""
     return plot_mean_curves(
         df,
