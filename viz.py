@@ -112,7 +112,11 @@ def plot_mean_curves(
     logscale=False,
     xticks=None,
     xlog=False,
+
     xlog_threshold=1.0,
+
+
+
 ):
     fig, ax = plt.subplots(figsize=(8, 5))
 
