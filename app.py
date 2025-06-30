@@ -315,6 +315,7 @@ if rand_file and time_file and xlsx_files:
     st.subheader("📈 Средние кривые (линейная шкала)")
     mean_df = df.groupby(["Treatment", "Time"])["Concentration"].mean().reset_index()
     xticks = sorted(time_dict.values())
+
     st.pyplot(mean_curves(mean_df, test_name, ref_name, times=xticks, xlog=True))
 
 
@@ -322,6 +323,24 @@ if rand_file and time_file and xlsx_files:
     st.pyplot(
         mean_curves(mean_df, test_name, ref_name, log=True, times=xticks, xlog=True)
     )
+
+
+    st.pyplot(mean_curves(mean_df, test_name, ref_name, times=xticks, xlog=True))
+
+
+    st.subheader("📈 Средние кривые (логарифмическая шкала)")
+    st.pyplot(
+        mean_curves(mean_df, test_name, ref_name, log=True, times=xticks, xlog=True)
+    )
+
+    st.pyplot(mean_curves(mean_df, test_name, ref_name, times=xticks))
+
+
+    st.subheader("📈 Средние кривые (логарифмическая шкала)")
+    st.pyplot(mean_curves(mean_df, test_name, ref_name, log=True, times=xticks))
+
+
+
 
     st.subheader("📊 Тестовый препарат: среднее ± 2×SD")
     fig_test = mean_sd_plot(df, label="Test", title=test_name)
